@@ -1,0 +1,30 @@
+name: evals
+
+on:
+  push:
+    paths: ["backend/evals/**", ".github/workflows/evals.yml"]
+  pull_request:
+    paths: ["backend/evals/**", ".github/workflows/evals.yml"]
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pytest
+      - name: Unit tests
+        run: python -m pytest evals -q
+      - name: Validate tasks (base fails, gold patch resolves)
+        run: python -m evals validate
+      - name: Mock-model eval run (pipeline check, not a model score)
+        run: python -m evals run --model mock -n 10 -k 1 5 --out eval-results
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: backend/eval-results
