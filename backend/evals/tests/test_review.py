@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from evals.review import (CRITERIA, Review, export_for_human_review, import_human_reviews, judge_prompt,
+from evals.review import (CRITERIA, Review, agreement, export_for_human_review, import_human_reviews, judge_prompt,
                           llm_judge, load_items, load_reviews, mock_judge, save_reviews)
 
 SAMPLE = Path(__file__).parents[1] / "data" / "review_items.jsonl"
@@ -73,3 +73,16 @@ def test_jsonl_round_trip(tmp_path):
 
 def test_prompt_lists_every_criterion():
     assert all(c in judge_prompt(ITEM) for c in CRITERIA)
+
+
+def test_agreement_between_judge_and_human():
+    def rev(item_id, who, s):
+        return Review(item_id, who, {c: s for c in CRITERIA}, {c: "r" for c in CRITERIA})
+
+    judge = [rev("a", "judge:x", 5), rev("b", "judge:x", 1), rev("c", "judge:x", 3), rev("only-judge", "judge:x", 2)]
+    human = [rev("a", "human:h", 5), rev("b", "human:h", 1), rev("c", "human:h", 4)]
+    report = agreement(judge, human)
+    corr = report["correctness"]
+    assert corr["n"] == 3
+    assert corr["exact_agreement"] == pytest.approx(2 / 3)
+    assert corr["quadratic_kappa"] > corr["kappa"]  # the one miss is only 1 point off

@@ -144,3 +144,26 @@ def import_human_reviews(path: Path, reviewer: str = "human") -> list[Review]:
             rationales = {c: row.get(f"{c}_rationale", "") for c in CRITERIA}
             reviews.append(Review(row["item_id"], f"human:{reviewer}", scores, rationales).validate())
     return reviews
+
+
+# ---------------------------------------------------------------- judge vs human agreement
+
+def agreement(first: list[Review], second: list[Review]) -> dict[str, dict]:
+    """Per-criterion agreement on the items both sets reviewed (matched by item_id)."""
+    from evals.metrics import cohen_kappa
+
+    other = {r.item_id: r for r in second}
+    pairs = [(r, other[r.item_id]) for r in first if r.item_id in other]
+    if not pairs:
+        raise ValueError("no item was reviewed by both sides")
+    out = {}
+    for c in CRITERIA:
+        x = [p.scores[c] for p, _ in pairs]
+        y = [q.scores[c] for _, q in pairs]
+        out[c] = {
+            "n": len(pairs),
+            "exact_agreement": sum(i == j for i, j in zip(x, y)) / len(pairs),
+            "kappa": cohen_kappa(x, y, labels=list(SCORES)),
+            "quadratic_kappa": cohen_kappa(x, y, labels=list(SCORES), weights="quadratic"),
+        }
+    return out

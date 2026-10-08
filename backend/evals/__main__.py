@@ -7,6 +7,8 @@ from pathlib import Path
 
 from evals.harness import load_tasks, validate_task
 from evals.models import get_model
+from evals.review import (agreement, export_for_human_review, import_human_reviews, llm_judge, load_items,
+                          load_reviews, mock_judge, save_reviews)
 from evals.runner import run_eval, to_markdown, write_report
 from evals.swebench_adapter import fetch_instances, summarize, write_predictions
 
@@ -41,6 +43,29 @@ def cmd_swebench(args) -> int:
     return 0
 
 
+def cmd_review(args) -> int:
+    if args.action == "judge":
+        if args.judge == "mock":
+            judge = mock_judge
+        else:
+            model = get_model(args.judge)
+            judge = lambda item: llm_judge(item, model.complete, model.name)
+        reviews = [judge(item) for item in load_items(args.items)]
+        save_reviews(reviews, Path(args.out))
+        for r in reviews:
+            print(f"{r.item_id}: overall {r.overall():.1f}  " + " ".join(f"{c}={s}" for c, s in r.scores.items()))
+        print(f"wrote {len(reviews)} reviews to {args.out}")
+    elif args.action == "export":
+        export_for_human_review(load_items(args.items), Path(args.out))
+        print(f"wrote {args.out}: fill in the *_score (1-5) and *_rationale columns")
+    else:  # agree
+        human = import_human_reviews(Path(args.human), reviewer="csv")
+        print(f"{'criterion':<24}{'n':>4}{'exact':>8}{'kappa':>8}{'q-kappa':>9}")
+        for c, m in agreement(load_reviews(Path(args.judged)), human).items():
+            print(f"{c:<24}{m['n']:>4}{m['exact_agreement']:>8.2f}{m['kappa']:>8.2f}{m['quadratic_kappa']:>9.2f}")
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="python -m evals")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -54,8 +79,16 @@ def main(argv=None) -> int:
     swe.add_argument("--dataset", default="lite", help="lite, verified, or a full HF dataset name")
     swe.add_argument("--limit", type=int, default=5)
     swe.add_argument("--write-gold-preds", metavar="PATH", help="write a predictions JSONL of the gold patches")
+    rev = sub.add_parser("review", help="rubric review of free-text outputs: judge, export for humans, agreement")
+    rev.add_argument("action", choices=["judge", "export", "agree"])
+    rev.add_argument("--items", default=str(Path(__file__).parent / "data" / "review_items.jsonl"))
+    rev.add_argument("--judge", default="mock", help="mock or anthropic (for action=judge)")
+    rev.add_argument("--out", default="eval-results/reviews.jsonl", help="judge: reviews JSONL; export: CSV path")
+    rev.add_argument("--judged", default="eval-results/reviews.jsonl", help="agree: judge reviews JSONL")
+    rev.add_argument("--human", help="agree: filled-in human review CSV")
     args = parser.parse_args(argv)
-    return {"validate": cmd_validate, "run": cmd_run, "swebench": cmd_swebench}[args.command](args)
+    return {"validate": cmd_validate, "run": cmd_run, "swebench": cmd_swebench,
+            "review": cmd_review}[args.command](args)
 
 
 if __name__ == "__main__":
