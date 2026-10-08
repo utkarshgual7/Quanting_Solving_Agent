@@ -1,0 +1,17 @@
+{
+  "instance_id": "quanting__rate-limit-3",
+  "repo": "utkarshgual7/Quanting_Solving_Agent",
+  "base_commit": "local-fixture",
+  "source": "backend/app/core/guardrails.py (InputGuardrails._check_rate_limit)",
+  "problem_statement": "The per-user rate limiter allows one request too many.\n\nThe limit is documented as \"max 20 requests per minute\", but a user can\nmake 21 requests inside the same minute before being blocked: the check\nuses `len(recent) > max_requests` before recording the new request.\n\n`RateLimiter(max_requests=N).allow(user)` should return True for the\nfirst N requests in a window and False for request N + 1.\n",
+  "patch": "diff --git a/rate_limit.py b/rate_limit.py\nindex 33a7af6..84e1e69 100644\n--- a/rate_limit.py\n+++ b/rate_limit.py\n@@ -15,7 +15,7 @@ class RateLimiter:\n         now = self.clock()\n         recent = [t for t in self.requests.get(user_id, []) if now - t < self.window]\n         self.requests[user_id] = recent\n-        if len(recent) > self.max_requests:\n+        if len(recent) >= self.max_requests:\n             return False\n         recent.append(now)\n         return True\n",
+  "test_patch": "diff --git a/tests/test_rate_limit.py b/tests/test_rate_limit.py\nindex ad197bb..e121a9a 100644\n--- a/tests/test_rate_limit.py\n+++ b/tests/test_rate_limit.py\n@@ -28,3 +28,9 @@ def test_users_are_independent():\n     limiter.allow(\"a\")\n     limiter.allow(\"a\")\n     assert limiter.allow(\"b\")\n+\n+\n+def test_request_over_limit_blocked():\n+    limiter = RateLimiter(max_requests=20, clock=FakeClock())\n+    results = [limiter.allow(\"u\") for _ in range(21)]\n+    assert results == [True] * 20 + [False]\n",
+  "FAIL_TO_PASS": [
+    "tests/test_rate_limit.py::test_request_over_limit_blocked"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_rate_limit.py::test_requests_under_limit_allowed",
+    "tests/test_rate_limit.py::test_window_expiry_resets_limit",
+    "tests/test_rate_limit.py::test_users_are_independent"
+  ]
+}

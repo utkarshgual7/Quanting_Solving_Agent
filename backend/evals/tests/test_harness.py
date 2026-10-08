@@ -60,3 +60,10 @@ def test_from_dict_accepts_hf_json_strings():
            "patch": "", "test_patch": "", "FAIL_TO_PASS": json.dumps(["t::a"]), "PASS_TO_PASS": "[]"}
     task = Task.from_dict(row)
     assert task.FAIL_TO_PASS == ["t::a"] and task.PASS_TO_PASS == []
+
+
+def test_every_local_task_is_valid():
+    tasks = load_tasks()
+    assert len(tasks) >= 3
+    for task in tasks:
+        assert validate_task(task) == [], task.instance_id

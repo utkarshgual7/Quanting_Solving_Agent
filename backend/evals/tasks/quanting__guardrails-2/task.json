@@ -1,0 +1,18 @@
+{
+  "instance_id": "quanting__guardrails-2",
+  "repo": "utkarshgual7/Quanting_Solving_Agent",
+  "base_commit": "local-fixture",
+  "source": "backend/app/core/guardrails.py (InputGuardrails._is_educational_content)",
+  "problem_statement": "The input guardrail rejects simple arithmetic questions.\n\nAsking the agent \"What is 2 + 2?\" fails with \"Content must be\nmathematics-focused\". The prompt has no maths keyword, and the\narithmetic regex only matches operators with no surrounding spaces\n(\"2+2\"), so \"2 + 2\" is not recognised as maths.\n\nArithmetic with spaces around the operator should be accepted. Non-maths\nprompts must still be rejected.\n",
+  "patch": "diff --git a/guardrails.py b/guardrails.py\nindex 9edebd9..8417561 100644\n--- a/guardrails.py\n+++ b/guardrails.py\n@@ -7,7 +7,7 @@ EDUCATIONAL_KEYWORDS = [\n ]\n \n MATH_PATTERNS = [\n-    r\"\\d+[\\+\\-\\*/]\\d+\",  # basic arithmetic\n+    r\"\\d+\\s*[\\+\\-\\*/]\\s*\\d+\",  # basic arithmetic, spaces allowed\n     r\"[a-z]\\s*=\\s*\\d+\",  # variable assignments\n     r\"\\\\[a-zA-Z]+\\{.*?\\}\",  # LaTeX commands\n     r\"\\b(solve|find|calculate|compute|determine)\\b\",  # action words\n",
+  "test_patch": "diff --git a/tests/test_guardrails.py b/tests/test_guardrails.py\nindex 8daf9f0..e97c1ea 100644\n--- a/tests/test_guardrails.py\n+++ b/tests/test_guardrails.py\n@@ -15,3 +15,8 @@ def test_latex_accepted():\n \n def test_non_math_rejected():\n     assert not is_math_query(\"Tell me a story about dragons\")\n+\n+\n+def test_spaced_arithmetic_accepted():\n+    assert is_math_query(\"What is 2 + 2?\")\n+    assert is_math_query(\"12 * 3\")\n",
+  "FAIL_TO_PASS": [
+    "tests/test_guardrails.py::test_spaced_arithmetic_accepted"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_guardrails.py::test_keyword_query_accepted",
+    "tests/test_guardrails.py::test_compact_arithmetic_accepted",
+    "tests/test_guardrails.py::test_latex_accepted",
+    "tests/test_guardrails.py::test_non_math_rejected"
+  ]
+}
