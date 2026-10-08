@@ -1,0 +1,19 @@
+{
+  "instance_id": "quanting__answer-check-1",
+  "repo": "utkarshgual7/Quanting_Solving_Agent",
+  "base_commit": "local-fixture",
+  "source": "backend/app/utils/evaluation.py (JEEBenchmarkEvaluator._evaluate_answer)",
+  "problem_statement": "The benchmark answer checker gives credit for wrong numeric answers.\n\n`is_correct(\"5\", \"The answer is x = 15\")` returns True, because the\nchecker does a plain substring test after normalising the strings, and\n\"5\" is a substring of \"x15\". The same happens with decimals:\n`is_correct(\"2\", \"x = 2.5\")` is True.\n\nA numeric expected answer should only match a whole number in the\nsolution, not a digit inside a longer number. Non-numeric answers\n(expressions like \"3x^2 + 4x - 5\") should keep working as before.\n",
+  "patch": "diff --git a/answer_check.py b/answer_check.py\nindex 599ce6b..41ee4e9 100644\n--- a/answer_check.py\n+++ b/answer_check.py\n@@ -1,4 +1,7 @@\n \"\"\"Answer checker used by the JEE benchmark (adapted from app/utils/evaluation.py).\"\"\"\n+import re\n+\n+NUMBER = re.compile(r\"-?\\d+(?:\\.\\d+)?(?:/\\d+)?\")\n \n \n def normalize_answer(answer: str) -> str:\n@@ -8,4 +11,8 @@ def normalize_answer(answer: str) -> str:\n def is_correct(correct_answer: str, agent_solution: str) -> bool:\n     correct = normalize_answer(correct_answer)\n     agent = normalize_answer(agent_solution)\n-    return correct in agent or any(term in agent for term in correct.split())\n+    if NUMBER.fullmatch(correct):\n+        # A number must not be glued to more digits (\"15\", \"2.5\").\n+        pattern = rf\"(?<!\\d)(?<!\\d\\.){re.escape(correct)}(?!\\.?\\d)\"\n+        return re.search(pattern, agent) is not None\n+    return correct in agent\n",
+  "test_patch": "diff --git a/tests/test_answer_check.py b/tests/test_answer_check.py\nindex 882442d..65a01c5 100644\n--- a/tests/test_answer_check.py\n+++ b/tests/test_answer_check.py\n@@ -15,3 +15,11 @@ def test_wrong_answer_rejected():\n \n def test_numeric_answer_followed_by_full_stop():\n     assert is_correct(\"5\", \"Therefore x = 5.\")\n+\n+\n+def test_number_inside_larger_number_rejected():\n+    assert not is_correct(\"5\", \"The answer is x = 15\")\n+\n+\n+def test_number_inside_decimal_rejected():\n+    assert not is_correct(\"2\", \"x = 2.5\")\n",
+  "FAIL_TO_PASS": [
+    "tests/test_answer_check.py::test_number_inside_larger_number_rejected",
+    "tests/test_answer_check.py::test_number_inside_decimal_rejected"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_answer_check.py::test_expression_match",
+    "tests/test_answer_check.py::test_spacing_insensitive",
+    "tests/test_answer_check.py::test_wrong_answer_rejected",
+    "tests/test_answer_check.py::test_numeric_answer_followed_by_full_stop"
+  ]
+}
