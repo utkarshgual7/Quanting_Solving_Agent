@@ -1,0 +1,69 @@
+{
+  "model": "mock",
+  "mock": true,
+  "timestamp": "2026-10-08T19:45:31+00:00",
+  "n": 10,
+  "summary": {
+    "pass@1": 0.49999999999999994,
+    "pass@5": 0.9907407407407407
+  },
+  "tasks": [
+    {
+      "instance_id": "quanting__answer-check-1",
+      "n": 10,
+      "c": 6,
+      "pass@1": 0.5999999999999999,
+      "pass@5": 1.0,
+      "samples": [
+        "resolved",
+        "resolved",
+        "resolved",
+        "resolved",
+        "patch_failed",
+        "unresolved",
+        "resolved",
+        "resolved",
+        "patch_failed",
+        "unresolved"
+      ]
+    },
+    {
+      "instance_id": "quanting__guardrails-2",
+      "n": 10,
+      "c": 4,
+      "pass@1": 0.4,
+      "pass@5": 0.9761904761904762,
+      "samples": [
+        "patch_failed",
+        "patch_failed",
+        "unresolved",
+        "resolved",
+        "resolved",
+        "resolved",
+        "resolved",
+        "unresolved",
+        "patch_failed",
+        "patch_failed"
+      ]
+    },
+    {
+      "instance_id": "quanting__rate-limit-3",
+      "n": 10,
+      "c": 5,
+      "pass@1": 0.5,
+      "pass@5": 0.996031746031746,
+      "samples": [
+        "patch_failed",
+        "resolved",
+        "resolved",
+        "resolved",
+        "resolved",
+        "unresolved",
+        "patch_failed",
+        "patch_failed",
+        "resolved",
+        "unresolved"
+      ]
+    }
+  ]
+}
