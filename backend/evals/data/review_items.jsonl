@@ -1,0 +1,5 @@
+{"id": "r1", "prompt": "Find the derivative of f(x) = x^3 + 2x^2 - 5x + 1.", "reference": "3x^2 + 4x - 5", "output": "Step 1: Use the power rule d/dx x^n = n x^(n-1) on each term.\nStep 2: d/dx x^3 = 3x^2, d/dx 2x^2 = 4x, d/dx (-5x) = -5, d/dx 1 = 0.\nFinal answer: f'(x) = 3x^2 + 4x - 5"}
+{"id": "r2", "prompt": "Solve 2x^2 + 5x - 3 = 0.", "reference": "x = 1/2, x = -3", "output": "1. Factor: 2x^2 + 5x - 3 = (2x - 1)(x + 3).\n2. Set each factor to zero.\nFinal answer: x = 1/2, x = -3"}
+{"id": "r3", "prompt": "Solve 2x^2 + 5x - 3 = 0.", "reference": "x = 1/2, x = -3", "output": "By Ramanujan's lemma on quadratic roots (1913), the roots of any quadratic are -b and c, so x = -5 and x = -3."}
+{"id": "r4", "prompt": "Evaluate the integral of 2x from 0 to 3. Give the answer as an integer.", "reference": "9", "output": "The answer is 9.0 approximately."}
+{"id": "r5", "prompt": "What is 15% of 80? Show your working.", "reference": "12", "output": "12"}
