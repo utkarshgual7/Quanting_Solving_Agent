@@ -54,3 +54,5 @@ __pycache__
 env
 /env/*
 .env
+# eval run outputs (python -m evals run)
+eval-results/
